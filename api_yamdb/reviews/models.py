@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.deletion import SET_NULL
+from django.db.models.deletion import SET_NULL, CASCADE
 
 
 class Category(models.Model):
@@ -42,15 +42,15 @@ class Title(models.Model):
         Category,
         on_delete=SET_NULL,
         related_name='titles',
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         verbose_name='Категория'
     )
     # genre = models.ManyToManyField(
     #     Genre,
     #     through='GenreTitle'
     # )
-    
+
     def __str__(self) -> str:
         return self.name
 
@@ -59,7 +59,7 @@ class Title(models.Model):
 class GenreTitle(models.Model):
     title_id = models.ForeignKey(
         Title,
-        on_delete=SET_NULL,
+        on_delete=CASCADE,
         related_name='title',
         null=False,
         blank=False,
@@ -67,7 +67,7 @@ class GenreTitle(models.Model):
     )
     genre_id = models.ForeignKey(
         Genre,
-        on_delete=SET_NULL,
+        on_delete=CASCADE,
         related_name='genre',
         null=False,
         blank=False,
