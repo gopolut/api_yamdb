@@ -35,28 +35,27 @@ class Title(models.Model):
         max_length=200,
         verbose_name='Название произведения'
     )
-    year = models.DateField(
-        auto_now_add=False,
+    year = models.PositiveSmallIntegerField(
         verbose_name='Дата создания'
     )
     category = models.ForeignKey(
         Category,
         on_delete=SET_NULL,
-        related_name='reviews',
+        related_name='titles',
         null=False,
         blank=False,
         verbose_name='Категория'
     )
-    genre = models.ManyToManyField(
-        Genre,
-        through='GenreTitle'
-    )
+    # genre = models.ManyToManyField(
+    #     Genre,
+    #     through='GenreTitle'
+    # )
     
     def __str__(self) -> str:
         return self.name
 
 # В этой модели будут связаны произведение(title_id)
-# и жанры,к которым оно может относиться(genre_id)
+# и жанры, к которым оно может относиться(genre_id)
 class GenreTitle(models.Model):
     title_id = models.ForeignKey(
         Title,
