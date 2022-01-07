@@ -75,4 +75,4 @@ class GenreTitle(models.Model):
     )
 
     def __str__(self) -> str:
-        return f'{self.title_id} {self.genre_id}'
+        return f' {self.genre_id}'
