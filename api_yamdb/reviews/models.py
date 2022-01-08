@@ -60,7 +60,7 @@ class GenreTitle(models.Model):
     title_id = models.ForeignKey(
         Title,
         on_delete=CASCADE,
-        related_name='title',
+        related_name='titles',
         null=False,
         blank=False,
         verbose_name='Произведение'        
@@ -68,7 +68,7 @@ class GenreTitle(models.Model):
     genre_id = models.ForeignKey(
         Genre,
         on_delete=CASCADE,
-        related_name='genre',
+        related_name='genres',
         null=False,
         blank=False,
         verbose_name='Жанр'        
