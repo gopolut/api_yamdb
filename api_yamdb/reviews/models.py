@@ -53,13 +53,16 @@ class Title(models.Model):
         through='GenreTitle'
     )
 
+    class Meta:
+        ordering = ['-pk']
+
     def __str__(self) -> str:
         return self.name
 
 # В этой модели будут связаны произведение(title_id)
 # и жанры, к которым оно может относиться(genre_id)
 class GenreTitle(models.Model):
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
         on_delete=CASCADE,
         related_name='titles',
@@ -67,7 +70,7 @@ class GenreTitle(models.Model):
         blank=False,
         verbose_name='Произведение'        
     )
-    genre_id = models.ForeignKey(
+    genre = models.ForeignKey(
         Genre,
         on_delete=CASCADE,
         related_name='genres',
