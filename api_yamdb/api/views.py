@@ -2,15 +2,17 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import render, get_object_or_404
 
 from rest_framework import viewsets
+from rest_framework.pagination import LimitOffsetPagination
 
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
+from .pagination import CustomPagination
 from reviews.models import Category, Genre, Title, GenreTitle
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-
+    # pagination_class = CustomPagination
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
@@ -20,11 +22,4 @@ class GenreViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-
-    # def perform_create(self, serializer):
-    #     # return super().perform_create(serializer)
-    #     # cat = get_object_or_404(Category, pk=self.kwargs.get('category'))
-    #     # cat = Category.objects.filter(slug=self.kwargs.get('titles'))
-    #     print('serializer: ', serializer.data)
-        
-    #     serializer.save(category=4)
+    # pagination_class = CustomPagination
