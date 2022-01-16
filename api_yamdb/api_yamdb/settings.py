@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'reviews.apps.ReviewsConfig',
     'api.apps.ApiConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -106,3 +107,5 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS':  'api.pagination.CustomPagination',
     # 'PAGE_SIZE': 5,    
 }
+
+AUTH_USER_MODEL = "users.CustomUser"

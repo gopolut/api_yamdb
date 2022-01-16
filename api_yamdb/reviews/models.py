@@ -1,13 +1,15 @@
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.db.models.deletion import SET_NULL, CASCADE
 
-User = get_user_model()
+from users.models import CustomUser
 
+
+SCORES = [(i,i) for i in range(1,11)]
+    
 class Category(models.Model):
     name = models.CharField(
         max_length=50,
-        verbose_name='Категории контента'
+        verbose_name='Категория произведения'
     )
     slug = models.SlugField(
         unique=True,
@@ -48,19 +50,22 @@ class Title(models.Model):
         blank=True,
         verbose_name='Категория'
     )
+
     genre = models.ManyToManyField(
         Genre,
         through='GenreTitle'
     )
 
-    class Meta:
-        ordering = ['-pk']
-
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        ordering = ['-pk']
+
+
 # В этой модели будут связаны произведение(title_id)
 # и жанры, к которым оно может относиться(genre_id)
+
 class GenreTitle(models.Model):
     title = models.ForeignKey(
         Title,
@@ -80,23 +85,27 @@ class GenreTitle(models.Model):
     )
 
     def __str__(self) -> str:
-        return f' {self.genre_id}'
+        return f' {self.genre}'
 
 
 class Reviews(models.Model):
     text = models.TextField()
     author = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         related_name="reviewer"
     )
-    score = models.DecimalField(
-        max_digits=1,
-        decimal_places=0
+    score = models.IntegerField( 
+        choices=SCORES
     )
     pub_date = models.DateTimeField(
         "Дата оценки",
         auto_now_add=True
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name="title"
     )
     
 class Comments(models.Model):
@@ -107,7 +116,7 @@ class Comments(models.Model):
     )
     text = models.TextField()
     author = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         related_name="commenter"
     )
