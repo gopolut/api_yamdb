@@ -1,12 +1,28 @@
-from django.db.models import fields
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueValidator
+from django.db.models import Avg
+from django.contrib.auth import get_user_model
 
-from reviews.models import Category, Genre, Title, GenreTitle
+from reviews.models import Category, Genre, Title, GenreTitle, Reviews, Comments
 
+User = get_user_model()
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = SlugRelatedField(slug_field="username", read_only=True)
+    
+    class Meta:
+        fields = ("id", "text", "author", "score", "pub_date")
+        model = Reviews
+        
+class CommentSerializer(serializers.ModelSerializer):
+    author = SlugRelatedField(slug_field="username", read_only=True)
+    
+    class Meta:
+        fields = ("id", "text", "author", "pub_date")
+        model = Comments
 
 class CategorySerializer(serializers.ModelSerializer):
-    # title = serializers.SlugRelatedField(slug_field='titles', read_only=True)
     
     class Meta:
         fields = ('id', 'name', 'slug',)
@@ -28,31 +44,74 @@ class GenreTitleSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    # category = serializers.PrimaryKeyRelatedField(read_only=True)
-    # category = CategorySerializer(many=True, read_only=True)
-    # category = SlugRelatedField(slug_field='titles', read_only=True)
-    # category = serializers.SlugRelatedField(slug_field='titles', queryset=Category.objects.all())
+
+    genre = serializers.SlugRelatedField(
+        many=True,
+        slug_field='slug',
+        queryset=Genre.objects.all()
+    )
+
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
     
-    # genre = SlugRelatedField(slug_field='genres', read_only=True)
-    # genre = GenreSerializer(many=True, required=False)
-    # genre = SlugRelatedField(slug_field='genres', queryset=Genre.objects.all())
-    # genre = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    # genre = SlugRelatedField(slug_field='titles', read_only=True)
-    # genre = serializers.SlugRelatedField(slug_field='titles', read_only=True)
-    # genre = GenreTitleSerializer(many=True, required=False)
-
-    genre = GenreTitleSerializer(many=True, required=False)
-
-    # def to_representation(self, instance):
-    #     rep = super().to_representation(instance)
-    #     rep['category'] = CategorySerializer(instance.category).data
-    #     rep['genre'] = CategorySerializer(instance).data
-    #     return rep
+    rating = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('id', 'name', 'year', 'genre', )
+        fields = ('id', 'name', 'year', 'rating', 'genre', 'category')
         model = Title
 
+    def get_rating(self, obj):
+        ### Пока получается не совсем-то, но стоит с чего-то начать
+        title = Title.objects.get(id=obj.id)
+        rating = Reviews.objects.filter(title=obj.id).aggregate(rating=Avg('score'))
+        return rating
+
+class SignUpSerializer(serializers.ModelSerializer):
+
+    username = serializers.CharField(
+        validators=(UniqueValidator(queryset=User.objects.all()),)
+    )
+    email = serializers.EmailField(
+        validators=(UniqueValidator(queryset=User.objects.all()),)
+    )
+
+    class Meta:
+        model = User
+        fields = ('email', 'username',)
+
+    def validate_username(self, value):
+
+        if value == 'me':
+            raise serializers.ValidationError(
+                'forbidden to use the name \'me\' as username.')
+        return value
+
+class TokenRequestSerializer(serializers.Serializer):
+
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField
+
+    class Meta:
+        require_fields = ('username', 'confirmation_code')
 
 
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
+
+    def update(self, obj, validated_data):
+
+        request = self.context.get('request')
+        user = request.user
+
+        is_admin = user.role == 'admin'
+        if not user.is_superuser or not is_admin:
+            validated_data.pop('role', None)
+
+        return super().update(obj, validated_data)
