@@ -42,6 +42,11 @@ class Title(models.Model):
     year = models.PositiveSmallIntegerField(
         verbose_name='Дата создания'
     )
+    description = models.TextField(
+        verbose_name='Описание произведения',
+        null=True,
+        blank=True,
+    )
     category = models.ForeignKey(
         Category,
         on_delete=SET_NULL,

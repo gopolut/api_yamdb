@@ -25,17 +25,108 @@ class CommentSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     
     class Meta:
-        fields = ('id', 'name', 'slug',)
+        fields = ('name', 'slug',)
+        lookup_field = 'slug'
         model = Category
+
+    # AttributeError: 'CategorySerializer' object has no attribute 'get_queryset'
+    # def to_internal_value(self, data):
+    #     try:
+    #         return self.get_queryset().get(**{self.slug_field: data})
+    #     except (TypeError, ValueError):
+    #         self.fail('invalid')
+
+    # def to_representation(self, value):
+    #     return CategorySerializer(value).data
+
+
+class CategoryField(serializers.RelatedField):
+    
+    # def to_internal_value(self, data):
+    #     try:
+    #         return self.get_queryset().get(**{self.slug_field: data})
+    #     except (TypeError, ValueError):
+    #         self.fail('invalid')
+
+    # def to_representation(self, value):
+    #     return CategorySerializer(value).data
+    
+    def to_representation(self, obj):
+        return {
+            'name': obj.name,
+            'slug': obj.slug
+        }
+
+    def to_internal_value(self, data):
+        try:
+            try:
+                # slug = data['category']
+                # print('-----', slug)
+                # return self.get_queryset()
+                print('-----', data)
+                # slug = data.get('slug')
+
+                # return self.get_queryset().get('slug')
+                return Category.objects.get(slug=data)
+            except KeyError:
+                raise serializers.ValidationError(
+                    'id is a required field.'
+                )
+            except ValueError:
+                raise serializers.ValidationError(
+                    'id must be an integer.'
+                )
+        except Category.DoesNotExist:
+            raise serializers.ValidationError(
+            'Объект отсутствует'
+            )
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    title_id = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug',)
+        # lookup_field = 'slug'
         model = Genre
 
+
+
+class GenreField(serializers.SlugRelatedField):
+    
+    def to_representation(self, obj):
+        return {
+            'name': obj.name,
+            'slug': obj.slug
+        }
+
+    def to_internal_value(self, data):
+        try:
+            try:
+                # slug = data['category']
+                # print('-----', slug)
+                # return self.get_queryset()
+                print('genres -----', data)
+                print('g---', self.get_queryset())
+                print('0000', self.get_queryset().get(**{self.slug_field: data}))
+
+                # return self.get_queryset().get(**{self.slug_field: data})
+                
+                return Genre.objects.get(slug=data)
+            except KeyError:
+                raise serializers.ValidationError(
+                    'id is a required field.'
+                )
+            except ValueError:
+                raise serializers.ValidationError(
+                    'id must be an integer.'
+                )
+        except Category.DoesNotExist:
+            raise serializers.ValidationError(
+            'Объект отсутствует'
+            )
+
+
+# Этот вообще не нужен
 class GenreTitleSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -44,17 +135,50 @@ class GenreTitleSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
+    # category = serializers.SlugRelatedField(slug_field='titles', queryset=Category.objects.all())
 
-    genre = serializers.SlugRelatedField(
+    # genre = SlugRelatedField(slug_field='genres', read_only=True)
+    # genre = GenreSerializer(many=True, required=False)
+    # genre = SlugRelatedField(slug_field='genres', queryset=Genre.objects.all())
+    # genre = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    # genre = SlugRelatedField(slug_field='titles', read_only=True)
+    # genre = serializers.SlugRelatedField(slug_field='titles', read_only=True)
+    # genre = GenreTitleSerializer(many=True, required=False)
+
+    # genre = GenreTitleSerializer(many=True, required=False)
+
+    # Работает:
+    #     genre = GenreSerializer(many=True, required=False)
+
+    # Работает:
+    # def to_representation(self, instance):
+    #     rep = super().to_representation(instance)
+    #     rep['category'] = CategorySerializer(instance.category).data
+    #     rep['genre'] = CategorySerializer(instance).data
+    #     return rep
+
+    genre = GenreField(
         many=True,
         slug_field='slug',
         queryset=Genre.objects.all()
     )
 
-    category = serializers.SlugRelatedField(
-        slug_field='slug',
+    category = CategoryField(
+        # slug_field='slug',
         queryset=Category.objects.all()
     )
+
+    # genre = serializers.SlugRelatedField(
+    #     many=True,
+    #     slug_field='slug',
+    #     queryset=Genre.objects.all()
+    # )
+
+    # category = serializers.SlugRelatedField(
+    #     slug_field='slug',
+    #     queryset=Category.objects.all()
+    # )
     
     rating = serializers.SerializerMethodField()
 
