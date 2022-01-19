@@ -4,7 +4,7 @@ from rest_framework.validators import UniqueValidator
 from django.db.models import Avg
 from django.contrib.auth import get_user_model
 
-from reviews.models import Category, Genre, Title, GenreTitle, Reviews, Comments
+from reviews.models import Category, Genre, Title, GenreTitle, Review, Comment
 
 User = get_user_model()
 
@@ -13,14 +13,14 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date")
-        model = Reviews
+        model = Review
         
 class CommentSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(slug_field="username", read_only=True)
     
     class Meta:
         fields = ("id", "text", "author", "pub_date")
-        model = Comments
+        model = Comment
 
 class CategorySerializer(serializers.ModelSerializer):
     
@@ -189,7 +189,7 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         ### Пока получается не совсем-то, но стоит с чего-то начать
         title = Title.objects.get(id=obj.id)
-        rating = Reviews.objects.filter(title=obj.id).aggregate(rating=Avg('score'))
+        rating = Review.objects.filter(title=obj.id).aggregate(rating=Avg('score'))
         return rating
 
 class SignUpSerializer(serializers.ModelSerializer):

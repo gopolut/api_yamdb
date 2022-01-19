@@ -13,7 +13,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Category, Genre, Title, Comment, Review
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          CommentSerializer, ReviewSerializer, UserSerializer, SignUpSerializer, TokenRequestSerializer, CategoryDeleteSerializer)
+                          CommentSerializer, ReviewSerializer, UserSerializer, SignUpSerializer, TokenRequestSerializer)
 from .permissions import IsAdmin, IsAuthorizedUser
 from .filters import TitleFilter
 from .viewsets import CatGenViewSet

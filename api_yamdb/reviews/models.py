@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models.deletion import SET_NULL, CASCADE
 
 from users.models import CustomUser
@@ -93,7 +93,7 @@ class GenreTitle(models.Model):
         return f' {self.genre}'
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     text = models.TextField()
     author = models.ForeignKey(
         CustomUser,
@@ -113,9 +113,21 @@ class Reviews(models.Model):
         related_name="title"
     )
     
-class Comments(models.Model):
+    def save(self, *args, **kwargs):
+        if (
+            Review.objects.filter(author=self.author, title=self.title)
+            and self.id is None
+        ):
+            raise IntegrityError()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ["-pk"]
+
+
+class Comment(models.Model):
     review = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name="review"
     )
