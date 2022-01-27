@@ -4,11 +4,11 @@ from rest_framework import permissions
 class IsSuperAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            return request.user.role == "admin" or request.user.is_superuser
+            return request.user.is_admin
         return False
 
     def has_object_permission(self, request, view, obj):
-        return request.user.role == "admin" or request.user.is_superuser
+        return request.user.is_admin
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -32,6 +32,14 @@ class IsAuthorOrModerator(permissions.BasePermission):
             return request.user.is_authenticated
         return (
             obj.author == request.user
-            or request.user.role == "moderator"
-            or request.user.role == "admin"
+            or request.user.is_moderator
+            or request.user.is_admin
         )
+
+
+class IsMe(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return obj.author == request.user

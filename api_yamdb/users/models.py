@@ -1,15 +1,17 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+
 from django.db import models
 
 
-USER_ROLE = 'user'
-MODERATOR_ROLE = 'moderator'
-ADMIN_ROLE = 'admin'
+USER_ROLE = "user"
+MODERATOR_ROLE = "moderator"
+ADMIN_ROLE = "admin"
+
 ROLE_CHOICES = (
-    (USER_ROLE, 'Пользователь'),
-    (MODERATOR_ROLE, 'Модератор'),
-    (ADMIN_ROLE, 'Администратор'),
+    (USER_ROLE, "Пользователь"),
+    (MODERATOR_ROLE, "Модератор"),
+    (ADMIN_ROLE, "Администратор"),
 )
 
 
@@ -31,11 +33,11 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, username, email, password=None, **extra_fields):
         """Создание суперюзера."""
         if password is None:
-            raise TypeError('Superusers must have a password.')
+            raise TypeError("Superusers must have a password.")
 
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
 
         return self.create_user(
             username=username, email=email, password=password, **extra_fields
@@ -46,12 +48,12 @@ class CustomUser(AbstractUser):
     """Класс юзера с проверками."""
 
     email = models.EmailField(unique=True)
-    bio = models.TextField('Биография', blank=True)
+    bio = models.TextField("Биография", blank=True)
     role = models.CharField(
         max_length=10,
         choices=ROLE_CHOICES,
-        default='user',
-        verbose_name='Роль',
+        default=USER_ROLE,
+        verbose_name="Роль",
     )
     confirmation_code = models.CharField(max_length=128, null=True, blank=True)
 
@@ -68,5 +70,5 @@ class CustomUser(AbstractUser):
         return self.role == MODERATOR_ROLE or self.is_staff
 
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
