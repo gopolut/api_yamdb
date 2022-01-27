@@ -1,196 +1,160 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueValidator
+
 from django.db.models import Avg
 from django.contrib.auth import get_user_model
 
-from reviews.models import Category, Genre, Title, GenreTitle, Review, Comment
+from reviews.models import Category, Genre, Title, Review, Comment
+from users.models import ADMIN_ROLE
+
 
 User = get_user_model()
 
+
 class ReviewSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field="username", read_only=True)
-    
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault(),
+    )
+
     class Meta:
-        fields = ("id", "text", "author", "score", "pub_date")
+        requires_context = True
+        fields = (
+            'id',
+            'text',
+            'author',
+            'score',
+            'pub_date'
+        )
         model = Review
-        
+
+    def validate(self, obj):
+        title_id = self.context['request'].parser_context['kwargs']['title_id']
+        author = self.context['request'].user
+        method = self.context['request'].method
+        if (
+            Review.objects.filter(
+                title=title_id,
+                author=author
+            ).exists()
+            and method != 'PATCH'
+        ):
+            raise serializers.ValidationError(
+                'Вы уже оставлял отзыв на данное произведение.'
+            )
+        return obj
+
+
 class CommentSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field="username", read_only=True)
-    
+    author = SlugRelatedField(slug_field='username', read_only=True)
+
     class Meta:
-        fields = ("id", "text", "author", "pub_date")
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
 
+
 class CategorySerializer(serializers.ModelSerializer):
-    
     class Meta:
-        fields = ('name', 'slug',)
+        fields = (
+            'name',
+            'slug',
+        )
         lookup_field = 'slug'
         model = Category
 
-    # AttributeError: 'CategorySerializer' object has no attribute 'get_queryset'
-    # def to_internal_value(self, data):
-    #     try:
-    #         return self.get_queryset().get(**{self.slug_field: data})
-    #     except (TypeError, ValueError):
-    #         self.fail('invalid')
 
-    # def to_representation(self, value):
-    #     return CategorySerializer(value).data
-
-
-class CategoryField(serializers.RelatedField):
-    
-    # def to_internal_value(self, data):
-    #     try:
-    #         return self.get_queryset().get(**{self.slug_field: data})
-    #     except (TypeError, ValueError):
-    #         self.fail('invalid')
-
-    # def to_representation(self, value):
-    #     return CategorySerializer(value).data
-    
+class CategoryField(serializers.SlugRelatedField):
     def to_representation(self, obj):
-        return {
-            'name': obj.name,
-            'slug': obj.slug
-        }
+        return {'name': obj.name, 'slug': obj.slug}
 
     def to_internal_value(self, data):
         try:
-            try:
-                # slug = data['category']
-                # print('-----', slug)
-                # return self.get_queryset()
-                print('-----', data)
-                # slug = data.get('slug')
-
-                # return self.get_queryset().get('slug')
-                return Category.objects.get(slug=data)
-            except KeyError:
-                raise serializers.ValidationError(
-                    'id is a required field.'
-                )
-            except ValueError:
-                raise serializers.ValidationError(
-                    'id must be an integer.'
-                )
-        except Category.DoesNotExist:
+            return Category.objects.get(slug=data)
+        except KeyError:
+            raise serializers.ValidationError('Необходимо указать slug')
+        except ValueError:
             raise serializers.ValidationError(
-            'Объект отсутствует'
+                'Используйте формат string для slug.'
             )
+        except Category.DoesNotExist:
+            raise serializers.ValidationError('Объект отсутствует')
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
     class Meta:
-        fields = ('name', 'slug',)
-        # lookup_field = 'slug'
+        fields = (
+            'name',
+            'slug',
+        )
         model = Genre
 
 
-
 class GenreField(serializers.SlugRelatedField):
-    
     def to_representation(self, obj):
-        return {
-            'name': obj.name,
-            'slug': obj.slug
-        }
+        return {'name': obj.name, 'slug': obj.slug}
 
     def to_internal_value(self, data):
         try:
-            try:
-                # slug = data['category']
-                # print('-----', slug)
-                # return self.get_queryset()
-                print('genres -----', data)
-                print('g---', self.get_queryset())
-                print('0000', self.get_queryset().get(**{self.slug_field: data}))
-
-                # return self.get_queryset().get(**{self.slug_field: data})
-                
-                return Genre.objects.get(slug=data)
-            except KeyError:
-                raise serializers.ValidationError(
-                    'id is a required field.'
-                )
-            except ValueError:
-                raise serializers.ValidationError(
-                    'id must be an integer.'
-                )
-        except Category.DoesNotExist:
+            return Genre.objects.get(slug=data)
+        except KeyError:
+            raise serializers.ValidationError('Требуется указать slug.')
+        except ValueError:
             raise serializers.ValidationError(
-            'Объект отсутствует'
+                'Используйте формат string для slug.'
             )
+        except Category.DoesNotExist:
+            raise serializers.ValidationError('Объект отсутствует')
 
 
-# Этот вообще не нужен
-class GenreTitleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        fields = '__all__'
-        model = GenreTitle
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    # category = serializers.SlugRelatedField(slug_field='titles', queryset=Category.objects.all())
-
-    # genre = SlugRelatedField(slug_field='genres', read_only=True)
-    # genre = GenreSerializer(many=True, required=False)
-    # genre = SlugRelatedField(slug_field='genres', queryset=Genre.objects.all())
-    # genre = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    # genre = SlugRelatedField(slug_field='titles', read_only=True)
-    # genre = serializers.SlugRelatedField(slug_field='titles', read_only=True)
-    # genre = GenreTitleSerializer(many=True, required=False)
-
-    # genre = GenreTitleSerializer(many=True, required=False)
-
-    # Работает:
-    #     genre = GenreSerializer(many=True, required=False)
-
-    # Работает:
-    # def to_representation(self, instance):
-    #     rep = super().to_representation(instance)
-    #     rep['category'] = CategorySerializer(instance.category).data
-    #     rep['genre'] = CategorySerializer(instance).data
-    #     return rep
+class TitleReadSerializer(serializers.ModelSerializer):
 
     genre = GenreField(
-        many=True,
-        slug_field='slug',
-        queryset=Genre.objects.all()
+        many=True, slug_field='slug', queryset=Genre.objects.all()
     )
-
-    category = CategoryField(
-        # slug_field='slug',
-        queryset=Category.objects.all()
-    )
-
-    # genre = serializers.SlugRelatedField(
-    #     many=True,
-    #     slug_field='slug',
-    #     queryset=Genre.objects.all()
-    # )
-
-    # category = serializers.SlugRelatedField(
-    #     slug_field='slug',
-    #     queryset=Category.objects.all()
-    # )
-    
+    category = CategorySerializer(required=False)
+   
     rating = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('id', 'name', 'year', 'rating', 'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        )
         model = Title
 
     def get_rating(self, obj):
-        ### Пока получается не совсем-то, но стоит с чего-то начать
-        title = Title.objects.get(id=obj.id)
-        rating = Review.objects.filter(title=obj.id).aggregate(rating=Avg('score'))
+        scores = Review.objects.filter(title=obj.id)
+        rating = scores.aggregate(rating=Avg('score'))['rating']
         return rating
+
+
+class TitleWriteSerializer(serializers.ModelSerializer):
+
+    genre = GenreField(
+        many=True, slug_field='slug', queryset=Genre.objects.all()
+    )
+
+    category = SlugRelatedField(slug_field='slug', queryset=Category.objects.all())
+    
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'year',
+            # 'rating',
+            'description',
+            'genre',
+            'category',
+        )
+        model = Title
+
 
 class SignUpSerializer(serializers.ModelSerializer):
 
@@ -203,14 +167,19 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username',)
+        fields = (
+            'email',
+            'username',
+        )
 
     def validate_username(self, value):
 
         if value == 'me':
             raise serializers.ValidationError(
-                'forbidden to use the name \'me\' as username.')
+                'Вы не можете использовать "me" как username.'
+            )
         return value
+
 
 class TokenRequestSerializer(serializers.Serializer):
 
@@ -222,11 +191,15 @@ class TokenRequestSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
         )
 
     def update(self, obj, validated_data):
@@ -234,7 +207,7 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = request.user
 
-        is_admin = user.role == 'admin'
+        is_admin = user.role == ADMIN_ROLE
         if not user.is_superuser or not is_admin:
             validated_data.pop('role', None)
 
