@@ -86,6 +86,14 @@ class TitleReadSerializer(serializers.ModelSerializer):
             "category",
         )
         model = Title
+    
+    # В запросе на чтение (GET) данные в validate отсутствуют
+    def validate(self, data):
+        print('data: ', data['description'])
+        if len(data['description']) == 0:
+            print('field description is empty')
+            raise serializers.ValidationError("finish must occur after start")
+        return data
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
@@ -135,6 +143,26 @@ class SignUpSerializer(serializers.ModelSerializer):
                 "Вы не можете использовать 'me' как username."
             )
         return value
+
+# Пример: получение данных словаря {context}
+    def validate(self, data):
+        print('data: ', data['year'])
+        author = self.context["request"].user
+        method = self.context["request"].method
+        print(f'author: {author}, method: {method}')
+
+        print('context: ', self.context)
+        # context:  {
+        #     'request': <rest_framework.request.Request: POST '/api/v1/titles/'>, 
+        #     'format': None, 'view': <api.views.TitleViewSet object at 0x000002139804FB50>
+        # }
+
+        if data['year'] > 2020:
+            print('new movie')
+            # raise serializers.ValidationError(
+            #     "finish must occur after start"
+            # )
+        return data
 
 
 class TokenRequestSerializer(serializers.Serializer):
