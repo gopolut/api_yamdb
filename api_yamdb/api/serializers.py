@@ -86,7 +86,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
             "category",
         )
         model = Title
-    
+
     # В запросе на чтение (GET) данные в validate отсутствуют
     def validate(self, data):
         print('data: ', data['description'])
@@ -128,7 +128,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
         print('context: ', self.context)
         # context:  {
-        #     'request': <rest_framework.request.Request: POST '/api/v1/titles/'>, 
+        #     'request': <rest_framework.request.Request: POST '/api/v1/titles/'>,
         #     'format': None, 'view': <api.views.TitleViewSet object at 0x000002139804FB50>
         # }
 
