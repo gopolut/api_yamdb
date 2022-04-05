@@ -1,5 +1,5 @@
 requests==2.26.0
-django==2.2.26
+django==2.2.27
 djangorestframework==3.12.4
 django-filter==21.1
 PyJWT==2.1.0
